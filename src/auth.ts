@@ -3,17 +3,43 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as os from 'os';
 import * as readline from 'readline/promises';
 import { fileURLToPath } from 'url';
 
-// --- Calculate paths relative to this script file (ESM way) ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const projectRootDir = path.resolve(__dirname, '..');
+// --- Configure file paths with environment variable support ---
+function getConfigPath(envVar: string, defaultFileName: string): string {
+  // Check if environment variable is set
+  const envPath = process.env[envVar];
+  if (envPath) {
+    return path.resolve(envPath);
+  }
 
-const TOKEN_PATH = path.join(projectRootDir, 'token.json');
-const CREDENTIALS_PATH = path.join(projectRootDir, 'credentials.json');
-// --- End of path calculation ---
+  // Default to user's config directory
+  const userConfigDir = path.join(os.homedir(), '.config', 'google-docs-mcp');
+  const defaultPath = path.join(userConfigDir, defaultFileName);
+
+  return defaultPath;
+}
+
+// Ensure config directory exists
+async function ensureConfigDirectoryExists() {
+  const userConfigDir = path.join(os.homedir(), '.config', 'google-docs-mcp');
+  try {
+    await fs.mkdir(userConfigDir, { recursive: true });
+  } catch (error) {
+    // Directory creation failed, will fallback to current working directory in individual functions
+    console.error(`Warning: Could not create config directory ${userConfigDir}, will use current working directory as fallback`);
+  }
+}
+
+const TOKEN_PATH = getConfigPath('GOOGLE_TOKEN_PATH', 'token.json');
+const CREDENTIALS_PATH = getConfigPath('GOOGLE_CREDENTIALS_PATH', 'credentials.json');
+
+// Log the paths being used for debugging
+console.error(`Using credentials file: ${CREDENTIALS_PATH}`);
+console.error(`Using token file: ${TOKEN_PATH}`);
+// --- End of path configuration ---
 
 const SCOPES = [
   'https://www.googleapis.com/auth/documents',
@@ -22,6 +48,7 @@ const SCOPES = [
 
 async function loadSavedCredentialsIfExist(): Promise<OAuth2Client | null> {
   try {
+    await ensureConfigDirectoryExists();
     const content = await fs.readFile(TOKEN_PATH);
     const credentials = JSON.parse(content.toString());
     const { client_secret, client_id, redirect_uris } = await loadClientSecrets();
@@ -34,18 +61,33 @@ async function loadSavedCredentialsIfExist(): Promise<OAuth2Client | null> {
 }
 
 async function loadClientSecrets() {
-  const content = await fs.readFile(CREDENTIALS_PATH);
-  const keys = JSON.parse(content.toString());
-  const key = keys.installed || keys.web;
-   if (!key) throw new Error("Could not find client secrets in credentials.json.");
-  return {
-      client_id: key.client_id,
-      client_secret: key.client_secret,
-      redirect_uris: key.redirect_uris
-  };
+  try {
+    const content = await fs.readFile(CREDENTIALS_PATH);
+    const keys = JSON.parse(content.toString());
+    const key = keys.installed || keys.web;
+    if (!key) throw new Error("Could not find client secrets in credentials.json.");
+    return {
+        client_id: key.client_id,
+        client_secret: key.client_secret,
+        redirect_uris: key.redirect_uris
+    };
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      throw new Error(`Credentials file not found at: ${CREDENTIALS_PATH}
+
+Please ensure you have:
+1. Downloaded your Google API credentials JSON file
+2. Set GOOGLE_CREDENTIALS_PATH environment variable, or
+3. Placed the file at: ${CREDENTIALS_PATH}
+
+See INSTALLATION.md for detailed setup instructions.`);
+    }
+    throw error;
+  }
 }
 
 async function saveCredentials(client: OAuth2Client): Promise<void> {
+  await ensureConfigDirectoryExists();
   const { client_secret, client_id } = await loadClientSecrets();
   const payload = JSON.stringify({
     type: 'authorized_user',
