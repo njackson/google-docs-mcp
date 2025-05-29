@@ -53,6 +53,37 @@ Before you start, make sure you have:
 
 ---
 
+## Installation Options
+
+You can install this server in two ways:
+
+### 🚀 Quick Install via NPX (Recommended)
+
+The fastest way to get started is using NPX:
+
+```bash
+npx @njackson/google-docs-mcp
+```
+
+This will:
+- Automatically download and install the latest version
+- Create a configuration directory at `~/.config/google-docs-mcp/`
+- Guide you through the setup process
+
+**Configurable File Paths:** You can customize where credentials and tokens are stored using environment variables:
+```bash
+# Custom paths (optional)
+export GOOGLE_CREDENTIALS_PATH="/path/to/your/credentials.json"
+export GOOGLE_TOKEN_PATH="/path/to/your/token.json"
+npx @njackson/google-docs-mcp
+```
+
+If not specified, files will be stored in `~/.config/google-docs-mcp/`.
+
+### 📦 Manual Installation (Alternative)
+
+If you prefer to clone and build manually, follow the detailed steps below.
+
 ## Setup Instructions
 
 Follow these steps carefully to get your own instance of the server running.
@@ -156,20 +187,43 @@ Now you need to run the server once manually to grant it permission to access yo
 8.  ✅ **Check:** You should now see a new file named `token.json` in your `mcp-googledocs-server` folder.
 9.  ⚠️ **SECURITY WARNING:** This `token.json` file contains the key that allows the server to access your Google account _without_ asking again. Protect it like a password. **Do not commit it to GitHub.** The included `.gitignore` file should prevent this automatically.
 
-### Step 6: Configure Claude Desktop (Optional)
+### Step 6: Configure Claude Desktop
 
 If you want to use this server with Claude Desktop, you need to tell Claude how to run it.
 
-1.  **Find Your Absolute Path:** You need the full path to the server code.
-    - In your terminal, make sure you are still inside the `mcp-googledocs-server` directory.
-    - Run the `pwd` command (on macOS/Linux) or `cd` (on Windows, just displays the path).
-    - Copy the full path (e.g., `/Users/yourname/projects/mcp-googledocs-server` or `C:\Users\yourname\projects\mcp-googledocs-server`).
-2.  **Locate `mcp_config.json`:** Find Claude's configuration file:
-    - **macOS:** `~/Library/Application Support/Claude/mcp_config.json` (You might need to use Finder's "Go" -> "Go to Folder..." menu and paste `~/Library/Application Support/Claude/`)
-    - **Windows:** `%APPDATA%\Claude\mcp_config.json` (Paste `%APPDATA%\Claude` into File Explorer's address bar)
+#### For NPX Installation (Recommended)
+
+1.  **Locate `mcp_config.json`:** Find Claude's configuration file:
+    - **macOS:** `~/Library/Application Support/Claude/mcp_config.json`
+    - **Windows:** `%APPDATA%\Claude\mcp_config.json`
     - **Linux:** `~/.config/Claude/mcp_config.json`
     - _If the `Claude` folder or `mcp_config.json` file doesn't exist, create them._
-3.  **Edit `mcp_config.json`:** Open the file in a text editor. Add or modify the `mcpServers` section like this, **replacing `/PATH/TO/YOUR/CLONED/REPO` with the actual absolute path you copied in Step 6.1**:
+
+2.  **Edit `mcp_config.json`:** Add the NPX configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "google-docs-mcp": {
+          "command": "npx",
+          "args": ["@njackson/google-docs-mcp"],
+          "env": {
+            "GOOGLE_CREDENTIALS_PATH": "~/.config/google-docs-mcp/credentials.json",
+            "GOOGLE_TOKEN_PATH": "~/.config/google-docs-mcp/token.json"
+          }
+        }
+      }
+    }
+    ```
+
+#### For Manual Installation
+
+1.  **Find Your Absolute Path:** You need the full path to the server code.
+    - In your terminal, make sure you are still inside the `mcp-googledocs-server` directory.
+    - Run the `pwd` command (on macOS/Linux) or `cd` (on Windows).
+    - Copy the full path (e.g., `/Users/yourname/projects/mcp-googledocs-server`).
+
+2.  **Edit `mcp_config.json`:** Add the manual installation configuration, **replacing `/PATH/TO/YOUR/CLONED/REPO` with your actual path**:
 
     ```json
     {
@@ -181,17 +235,11 @@ If you want to use this server with Claude Desktop, you need to tell Claude how 
           ],
           "env": {}
         }
-        // Add commas here if you have other servers defined
       }
-      // Other Claude settings might be here
     }
     ```
 
-    - **Make sure the path in `"args"` is correct and absolute!**
-    - If the file already existed, carefully merge this entry into the existing `mcpServers` object. Ensure the JSON is valid (check commas!).
-
-4.  **Save `mcp_config.json`.**
-5.  **Restart Claude Desktop:** Close Claude completely and reopen it.
+3.  **Save `mcp_config.json`** and **restart Claude Desktop**.
 
 ---
 

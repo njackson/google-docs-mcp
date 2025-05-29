@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // src/server.ts
 import { FastMCP, UserError } from 'fastmcp';
 import { z } from 'zod';

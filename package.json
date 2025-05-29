@@ -1,16 +1,44 @@
 {
-  "name": "mcp-googledocs-server",
+  "name": "@njackson/google-docs-mcp",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/server.js",
+  "bin": {
+    "google-docs-mcp": "./dist/server.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "SAMPLE_TASKS.md",
+    "vscode.md"
+  ],
   "scripts": {
     "test": "node --test tests/",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "google-docs",
+    "google-drive",
+    "claude",
+    "ai-assistant",
+    "njackson"
+  ],
+  "author": "Nate Jackson <551+njackson@users.noreply.github.com> (https://github.com/njackson)",
+  "contributors": [
+    "Alain Bonus <153412582+a-bonus@users.noreply.github.com> (https://github.com/a-bonus)"
+  ],
+  "license": "MIT",
+  "description": "Ultimate Google Docs & Drive MCP Server - Complete Google Drive file management and document editing through the Model Context Protocol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/njackson/google-docs-mcp.git"
+  },
+  "homepage": "https://github.com/njackson/google-docs-mcp#readme",
   "dependencies": {
     "fastmcp": "^1.21.0",
     "google-auth-library": "^9.15.1",
@@ -21,5 +49,8 @@
     "@types/node": "^22.14.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
